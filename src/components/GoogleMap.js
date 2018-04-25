@@ -21,6 +21,31 @@ const arrowSymbol = {
 
 const renderRoutePolylines = route => route.index ? route.index.map(renderPolyline) : [ renderPolyline(route) ];
 
+const renderCarsReal = props => {
+  const { cars, startRefresh, stopRefresh } = props;
+  const result = props.cars.filter(item => +item.lat != 0 && +item.lng != 0);
+
+  if (result.length) {
+    startRefresh();
+
+    return result.map(car => {
+      const pos = { lat: +car.lat, lng: +car.lng };
+
+      return (
+        <Marker
+          key={`car${car.id}`}
+          position={pos}
+          icon={{
+            url: '../resources/car3.png',
+          }}
+        />
+      );
+    })
+  } else stopRefresh();
+
+  return [];
+};
+
 const renderPolyline = waypoint => (
   <Polyline
     key={`p${waypoint.num}`}
@@ -67,25 +92,10 @@ export default withGoogleMap(props => (
             ...renderRoutePolylines(cur)
           ]), []) : null,
 
-        props.showReal ? props.real.reduce((acc, cur) => ([ ...acc, ...renderRoutePolylines(cur) ]), []) : null
+        props.showReal ? props.real.reduce((acc, cur) => ([ ...acc, ...renderRoutePolylines(cur) ]), []) : null,
+        ...renderCarsReal(props)
       ]
     }
     { props.traffic && <TrafficLayer autoUpdate /> }
-    { props.cars.length 
-      ? props.cars.filter(item => +item.lat != 0 && +item.lng != 0 )
-        .map(car => {
-          const pos = { lat: +car.lat, lng: +car.lng };
-
-          return (
-            <Marker
-              key={`car${car.id}`}
-              position={pos}
-              icon={{
-                url: '../resources/car3.png',
-              }}
-            />
-          );
-      }) 
-      : null }
   </GoogleMap>
 ));

@@ -25,6 +25,8 @@ class App extends React.Component {
     this.handleCheckBoxTrafficChange = this.handleCheckBoxTrafficChange.bind(this);
     this.handleCheckBoxCarsChange =    this.handleCheckBoxCarsChange.bind(this);
     this.handleCheckBoxDriversChange = this.handleCheckBoxDriversChange.bind(this);
+    this.startRefreshCars =            this.startRefreshCars.bind(this);
+    this.stopRefreshCars =             this.stopRefreshCars.bind(this);
     this.handleMapLoad =               this.handleMapLoad.bind(this);
     this.submit =                      this.submit.bind(this);
 
@@ -40,6 +42,7 @@ class App extends React.Component {
       showReal: false,
       showPlan: true,
       showTraffic: false,
+      carsReal: []
     };
   }
 
@@ -66,8 +69,21 @@ class App extends React.Component {
     window._m = map;
   }
 
+  startRefreshCars() {
+    console.log('start');
+    if (!this._refreshCars) this._refreshCars = setInterval(() => this.props.getCars(this.state.deps), 3000);
+  }
+
+  stopRefreshCars() {
+    console.log('stop');
+    if (this._refreshCars) {
+      clearInterval(this._refreshCars);
+      this._refreshCars = false;
+    }
+  }
+
   handleDepsChange(value) {
-    this.setState({ deps: value });
+    this.setState(prevState => ({ deps: value,  allCars: value.length ? prevState.allCars : false }));
     this.props.getCars(value);
   }
 
@@ -171,6 +187,8 @@ class App extends React.Component {
             containerElement={<div style={mapStyle} />}
             mapElement={<div style={mapStyle} />} 
             cars={carsPos}
+            startRefresh={this.startRefreshCars}
+            stopRefresh={this.stopRefreshCars}
             onMapLoad={this.handleMapLoad}
             center={this.props.center}
             routes={this.props.routes}
