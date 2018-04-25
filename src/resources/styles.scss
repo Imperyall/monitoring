@@ -1,0 +1,54 @@
+body {
+  display: block;
+  font-size: 16px;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  line-height: 1.4em;
+  color: #4d4d4d;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-font-smoothing: antialiased;
+  font-smoothing: antialiased;
+  font-weight: 400;
+}
+
+#monitoring_container {
+  display: flex;
+  height: 100vh;
+}
+
+#map_side {
+  flex-grow: 0.75;
+  flex-basis: 0px;
+}
+
+#divider_side {
+  flex: 0 0 auto;
+  width: 12px;
+  background: url(divider.png) center center no-repeat #9e9e9e;
+  min-height: 100%;
+  cursor: col-resize;
+}
+
+#divider_side:hover {
+  background-color: #a9a9a9;
+}
+
+#filter_side {
+  flex-grow: 0.25;
+  background-color: #fff;
+  flex-basis: 0px;
+}
+
+div.dropdown {
+  font-size: 14px!important;
+}
+
+div.ui.checkbox {
+  margin: 0!important;
+}
+
+.checkbox_show_all {
+  float: right;
+  top: -33px;
+}
