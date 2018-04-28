@@ -23,10 +23,10 @@ const renderRoutePolylines = route => route.index ? route.index.map(renderPolyli
 
 const renderCarsReal = props => {
   const { cars, startRefresh, stopRefresh } = props;
-  const result = props.cars.filter(item => +item.lat != 0 && +item.lng != 0);
+  const result = cars.data.filter(item => +item.lat != 0 && +item.lng != 0);
 
   if (result.length) {
-    startRefresh();
+    startRefresh(cars.option);
 
     return result.map(car => {
       const pos = { lat: +car.lat, lng: +car.lng };
@@ -40,7 +40,7 @@ const renderCarsReal = props => {
           }}
         />
       );
-    })
+    });
   } else stopRefresh();
 
   return [];

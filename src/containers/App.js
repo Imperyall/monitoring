@@ -69,9 +69,22 @@ class App extends React.Component {
     window._m = map;
   }
 
-  startRefreshCars() {
+  startRefreshCars(option) {
+    let func;
+
+    switch (option) {
+      case 'drivers':
+        func = this.props.getDrivers;
+        break;
+      case 'cars':
+        func = this.props.getCars;
+        break;
+      case 'none':
+        return;
+    }
+
     console.log('start');
-    if (!this._refreshCars) this._refreshCars = setInterval(() => this.props.getCars(this.state.deps), 3000);
+    if (!this._refreshCars) this._refreshCars = setInterval(() => func(this.state.deps), 3000);
   }
 
   stopRefreshCars() {
@@ -177,8 +190,10 @@ class App extends React.Component {
     const showDrivers = this.state.cars.length !== 0 || this.state.allCars;
     const showCars = this.state.drivers.length !== 0 || this.state.allDrivers;
 
-    let carsPos = this.state.allCars ? this.props.cars : this.props.cars.filter(car => this.state.cars.indexOf(car.id) !== -1);
-        carsPos = this.state.allDrivers ? this.props.drivers : (this.state.drivers.length !== 0 ? this.props.drivers.filter(driver => this.state.drivers.indexOf(driver.id) !== -1) : carsPos);
+    const carsPos = this.state.allCars ? this.props.cars : this.props.cars.filter(car => this.state.cars.indexOf(car.id) !== -1);
+    const driversPos = this.state.allDrivers ? this.props.drivers : this.props.drivers.filter(driver => this.state.drivers.indexOf(driver.id) !== -1);
+
+    const visibleData = driversPos.length ? { data: driversPos, option: 'drivers' } : ( carsPos.length ? { data: carsPos, option: 'cars' } : { data: driversPos, option: 'none' } );
 
     return (
       <div id="monitoring_container">
@@ -186,7 +201,7 @@ class App extends React.Component {
           <GoogleMap
             containerElement={<div style={mapStyle} />}
             mapElement={<div style={mapStyle} />} 
-            cars={carsPos}
+            cars={visibleData}
             startRefresh={this.startRefreshCars}
             stopRefresh={this.stopRefreshCars}
             onMapLoad={this.handleMapLoad}
