@@ -7,28 +7,33 @@ import { Button, Header, Dropdown, Input, Checkbox } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 import { resizeEvent } from '../utils';
 import moment from 'moment';
+import {NotificationContainer, NotificationManager} from 'react-notifications';
+import 'react-notifications/lib/notifications.css';
 
 const { LatLngBounds } = window.google.maps;
+
+window.notify = NotificationManager;
 
 class App extends React.Component {
   constructor() {
     super();
 
-    this.handleFromDateChange =        this.handleFromDateChange.bind(this);
-    this.handleToDateChange =          this.handleToDateChange.bind(this);
-    this.handleDepsChange =            this.handleDepsChange.bind(this);
-    this.handleDriversChange =         this.handleDriversChange.bind(this);
-    this.handleCarsChange =            this.handleCarsChange.bind(this);
-    this.handleRoutesChange =          this.handleRoutesChange.bind(this);
-    this.handleCheckBoxRealChange =    this.handleCheckBoxRealChange.bind(this);
-    this.handleCheckBoxPlanChange =    this.handleCheckBoxPlanChange.bind(this);
-    this.handleCheckBoxTrafficChange = this.handleCheckBoxTrafficChange.bind(this);
-    this.handleCheckBoxCarsChange =    this.handleCheckBoxCarsChange.bind(this);
-    this.handleCheckBoxDriversChange = this.handleCheckBoxDriversChange.bind(this);
-    this.startRefreshCars =            this.startRefreshCars.bind(this);
-    this.stopRefreshCars =             this.stopRefreshCars.bind(this);
-    this.handleMapLoad =               this.handleMapLoad.bind(this);
-    this.submit =                      this.submit.bind(this);
+    this.handleFromDateChange =         this.handleFromDateChange.bind(this);
+    this.handleToDateChange =           this.handleToDateChange.bind(this);
+    this.handleDepsChange =             this.handleDepsChange.bind(this);
+    this.handleDriversChange =          this.handleDriversChange.bind(this);
+    this.handleCarsChange =             this.handleCarsChange.bind(this);
+    this.handleRoutesChange =           this.handleRoutesChange.bind(this);
+    this.handleCheckBoxRealChange =     this.handleCheckBoxRealChange.bind(this);
+    this.handleCheckBoxPlanChange =     this.handleCheckBoxPlanChange.bind(this);
+    this.handleCheckBoxTrafficChange =  this.handleCheckBoxTrafficChange.bind(this);
+    this.handleCheckBoxCarsChange =     this.handleCheckBoxCarsChange.bind(this);
+    this.handleCheckBoxDriversChange =  this.handleCheckBoxDriversChange.bind(this);
+    this.startRefreshCars =             this.startRefreshCars.bind(this);
+    this.stopRefreshCars =              this.stopRefreshCars.bind(this);
+    this.handleMapLoad =                this.handleMapLoad.bind(this);
+    this.submit =                       this.submit.bind(this);
+    this.handleCheckBoxRealTimeChange = this.handleCheckBoxRealTimeChange.bind(this);
 
     this.state = {
       fromDate: moment(new Date()).hour(0).minutes(0).seconds(0).format("YYYY-MM-DDTHH:mm:ss"),
@@ -42,18 +47,32 @@ class App extends React.Component {
       showReal: false,
       showPlan: true,
       showTraffic: false,
+      showRealTime: false,
       carsReal: []
     };
   }
 
   componentDidMount() {
-    this.props.startLoading();
     this.props.init();
     this.props.getDrivers();
   }
 
   componentDidUpdate(prevProps, prevState) {
     if ((prevState.routes !== this.state.routes && this.state.showPlan) || (prevState.showPlan !== this.state.showPlan && this.state.showPlan)) this.props.refreshBounds(this.state.routes);
+
+    if ((prevState.cars !== this.state.cars) || (prevState.drivers !== this.state.drivers)) {
+      if (this.state.cars.length == 0 && this.state.drivers.length == 0) {
+        this.getRouteReal();
+        this.handleRoutesChange();
+        this.props.getRoutes();
+      } else if (this.state.cars.length == 1) {
+        this.props.getRoutes({ car: this.state.cars, show: this.state.routes }); 
+        this.state.showReal && this.getRouteReal();
+      } else if (this.state.drivers.length == 1) {
+        this.props.getRoutes({ driver: this.state.drivers, show: this.state.routes }); 
+        this.state.showReal && this.getRouteReal();
+      }
+    }
 
     const { bounds } = this.props;
 
@@ -83,12 +102,10 @@ class App extends React.Component {
         return;
     }
 
-    console.log('start');
-    if (!this._refreshCars) this._refreshCars = setInterval(() => func(this.state.deps), 3000);
+    if (!this._refreshCars) this._refreshCars = setInterval(() => func(this.state.deps), 10000);
   }
 
   stopRefreshCars() {
-    console.log('stop');
     if (this._refreshCars) {
       clearInterval(this._refreshCars);
       this._refreshCars = false;
@@ -102,15 +119,34 @@ class App extends React.Component {
 
   handleDriversChange(value) {
     this.setState({ drivers: value });
+
+    // if (value.length == 1) {
+    //   this.props.getRoutes({ driver: value, show: this.state.routes }); 
+    //   this.state.showReal && this.getRouteReal();
+    // } else if (value.length == 0) {
+    //   this.getRouteReal(true);
+    // } else {
+    //   this.props.getRoutes({ driver: [] });
+    //   this.handleRoutesChange();
+    // }
   }
 
   handleCarsChange(value) {
     this.setState({ cars: value });
-    this.props.getRoutes(value, this.state.routes);
+
+    // if (value.length == 1) {
+    //   this.props.getRoutes({ car: value, show: this.state.routes }); 
+    //   this.state.showReal && this.getRouteReal();
+    // } else if (value.length == 0) {
+    //   this.getRouteReal(true);
+    // } else {
+    //   this.props.getRoutes({ car: [] });
+    //   this.handleRoutesChange();
+    // }
   }
 
-  handleRoutesChange(value) {
-    this.setState({ routes: value });
+  handleRoutesChange(value = []) {
+    this.setState(prevState => ({ routes: prevState.length !== 0 ? value.filter(item => prevState.routes.indexOf(item) === -1) : value }));
   }
 
   handleCheckBoxRealChange(e, data) {
@@ -120,23 +156,27 @@ class App extends React.Component {
   }
 
   handleCheckBoxPlanChange(e, data) {
-    if (this.state.showReal) this.getRouteReal();
+    this.state.showReal && this.getRouteReal();
 
     this.setState({ showPlan: data.checked });
   }
 
   handleCheckBoxCarsChange(e, data) {
     this.setState({ allCars: data.checked, allDrivers: false, drivers: [] });
-    this.handleCarsChange([]);
+    // this.handleCarsChange([]);///////////////////////////////////////////////
   }
 
   handleCheckBoxDriversChange(e, data) {
     this.setState({ allDrivers: data.checked, allCars: false, drivers: [] });
-    this.handleCarsChange([]);
+    // this.handleCarsChange([]);///////////////////////////////////////////////
   }
 
   handleCheckBoxTrafficChange(e, data) {
     this.setState({ showTraffic: data.checked });
+  }
+
+  handleCheckBoxRealTimeChange(e, data) {
+    this.setState({ showRealTime: data.checked });
   }
 
   handleFromDateChange(event) {
@@ -155,7 +195,8 @@ class App extends React.Component {
 
   getRouteReal() {
     this.props.getRouteReal({
-      car: this.state.drivers[0] || this.state.cars[0], 
+      driver: this.state.drivers[0],
+      car: this.state.drivers[0] ? undefined : this.state.cars[0], 
       date_from: moment(this.state.fromDate).isValid() ? moment(this.state.fromDate).format("YYYY-MM-DDTHH:mm:ss") : null, 
       date_to: moment(this.state.toDate).isValid() ? moment(this.state.toDate).format("YYYY-MM-DDTHH:mm:ss") : null
     });
@@ -186,7 +227,7 @@ class App extends React.Component {
 
     const showCheckbox = this.state.cars.length != 1 && this.state.drivers.length != 1;
 
-    const showRoutes = !this.props.loading && (this.state.drivers.length || this.state.routes.length);
+    //const showRoutes = this.state.routes.length;//this.state.drivers.length || this.state.routes.length;
     const showDrivers = this.state.cars.length !== 0 || this.state.allCars;
     const showCars = this.state.drivers.length !== 0 || this.state.allDrivers;
 
@@ -202,19 +243,20 @@ class App extends React.Component {
             containerElement={<div style={mapStyle} />}
             mapElement={<div style={mapStyle} />} 
             cars={visibleData}
+            realTime={this.state.showRealTime}
             startRefresh={this.startRefreshCars}
             stopRefresh={this.stopRefreshCars}
             onMapLoad={this.handleMapLoad}
             center={this.props.center}
-            routes={this.props.routes}
-            showRoutes={this.state.showPlan && showRoutes}
+            routes={this.props.routes.filter(item => this.state.routes.indexOf(item.id) !== -1)}
+            showRoutes={this.state.showPlan && this.state.routes.length}
             real={this.props.real}
             traffic={this.state.showTraffic}
-            showReal={this.state.showReal && showRoutes} />
+            showReal={this.state.showReal} />
         </div>
         <div id="divider_side" onMouseDown={() => resizeEvent()} />
         <div id="filter_side">
-          <div style={{ margin: '10px 10px 2px' }}>
+          <div>
 
             <Header size="small">Выбор отделов доставки</Header>
             <Dropdown 
@@ -275,28 +317,34 @@ class App extends React.Component {
               fluid
               noResultsMessage="Отсутствуют элементы" 
               options={routeOptions} 
+              value={this.state.routes}
               onChange={(e, data) => this.handleRoutesChange(data.value)} />
 
             <Header size="small">Выбор периода</Header>
-            <div style={{ height: '45px' }}>
+            <div className="time-box">
               <b>начало</b>
               <Input 
-                style={{ float: 'right' }} 
                 size="mini" 
                 type="datetime-local"
                 value={this.state.fromDate}
                 onChange={this.handleFromDateChange} />
             </div>
-            <div style={{ height: '45px' }}>
+            <div className="time-box">
               <b>конец</b>
               <Input 
-                style={{ float: 'right' }} 
                 size="mini" 
                 type="datetime-local"
                 value={this.state.toDate}
                 onChange={this.handleToDateChange} />
             </div>
 
+            <div>
+              <Checkbox 
+                label="Отображать ТС в реальном времени" 
+                disabled={showCheckbox}
+                checked={this.state.showRealTime}
+                onChange={this.handleCheckBoxRealTimeChange} />
+            </div>
             <div>
               <Checkbox 
                 label="Отображать реальный маршрут" 
@@ -327,6 +375,7 @@ class App extends React.Component {
               onClick={() => this.submit()}>Применить</Button>
           </div>
         </div>
+        <NotificationContainer/>
       </div>
     );
   }
@@ -361,7 +410,7 @@ const mapStateToProps = state => ({
   drivers:         state.drivers,
   routes:          state.routes,
   real:            state.real,
-  loading:         state.loading,
+  loading:         state.loading.length !== 0,
   center:          state.center,
   bounds:          state.bounds,
 });

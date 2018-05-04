@@ -39,6 +39,9 @@ body {
   background-color: #fff;
   flex-basis: 0px;
 }
+#filter_side > div {
+  margin: 10px 10px 2px;
+}
 
 div.dropdown {
   font-size: 14px!important;
@@ -52,3 +55,15 @@ div.ui.checkbox {
   float: right;
   top: -33px;
 }
+.time-box {
+  height: 45px;
+}
+.time-box div {
+  float: right;
+}
+/*.close-icon {
+  position: absolute;
+  z-index: 1;
+  top: 8px;
+  right: 25px;
+}*/

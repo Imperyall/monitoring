@@ -1,5 +1,7 @@
 import moment from 'moment';
 
+export const getRandomString = () => Math.random().toString(36).substring(7);
+
 export const resizeEvent = () => {
   let left = document.getElementById('map_side');
   let right = document.getElementById('filter_side');

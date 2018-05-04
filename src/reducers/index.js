@@ -7,6 +7,7 @@ import {
   START_LOADING,
   REFRESH_BOUNDS,
 } from '../constants/actionTypes';
+import { getRandomString } from '../utils';
 
 const DEFAULT_STATE = {
   deliveryDeps: [],
@@ -15,7 +16,7 @@ const DEFAULT_STATE = {
   routes: [],
   real: [],
   bounds: null,
-  loading: false,
+  loading: [],
   center: { lat: 45.0444582, lng: 39.0145869 },
 };
 
@@ -35,22 +36,28 @@ const getRouteBounds = route => {
   return bounds;
 };
 
-const getRandomString = () => Math.random().toString(36).substring(7);
-
 export default function reducer(state = DEFAULT_STATE, action) {
   switch (action.type) {
     case INIT_STATE: {
       return {
         ...state,
         deliveryDeps: action.payload,
-        loading: false,
       };
     }
 
     case START_LOADING: {
+      const { add, end } = action.payload;
+      let newLoading = state.loading;
+
+      if (end) {
+        newLoading.splice(state.loading.indexOf(end), 1);
+      } else if (add) {
+        newLoading.push(add);
+      }
+
       return {
         ...state,
-        loading: action.payload === undefined ? true : action.payload,
+        loading: newLoading,
       };
     }
 
@@ -58,7 +65,6 @@ export default function reducer(state = DEFAULT_STATE, action) {
       return {
         ...state,
         cars: action.payload,
-        loading: false,
       };
     }
 
@@ -66,7 +72,6 @@ export default function reducer(state = DEFAULT_STATE, action) {
       return {
         ...state,
         drivers: action.payload,
-        loading: false,
       };
     }
 
@@ -74,10 +79,9 @@ export default function reducer(state = DEFAULT_STATE, action) {
       return {
         ...state,
         routes: action.payload.routes,
-        bounds: action.payload.show.length
+        bounds: action.payload.show && action.payload.show.length
           ? { ...getRouteBounds(action.payload.routes).toJSON(), hash: getRandomString() }
           : null,
-        loading: false,
       };
     }
 
@@ -89,12 +93,11 @@ export default function reducer(state = DEFAULT_STATE, action) {
         bounds: action.payload.length
           ? { ...getRouteBounds(state.routes.find(item => action.payload.indexOf(item.id) !== -1 ).index).toJSON(), hash: getRandomString() }
           : null,
-        loading: false,
       };
     }
 
     case GET_ROUTE_REAL: {
-      if (!action.payload.car) return state; 
+      if (!action.payload.car && !action.payload.driver) return { ...state, real: [] }; 
 
       let newState = state, index = newState.real.findIndex(item => item.geometry == action.payload.data),
           data = action.payload.data.map((item, index) => ({ num: index, geometry: item }));
@@ -103,7 +106,6 @@ export default function reducer(state = DEFAULT_STATE, action) {
 
       return {
         ...newState,
-        loading: false,
         bounds: data.length 
           ? { ...getRouteBounds(data).toJSON(), hash: getRandomString() }
           : null,
