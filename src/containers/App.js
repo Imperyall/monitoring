@@ -222,7 +222,9 @@ class App extends React.Component {
     }));
 
     const routeOptions = this.props.routes.map(option => ({
-      text: `${option.id1} - ${option.delivery_date}`, value: option.id
+      text: `${option.id1} - ${option.delivery_date}`, 
+      value: option.id, 
+      label: { color: option.color, empty: true, circular: true }
     }));
 
     const showCheckbox = this.state.cars.length != 1 && this.state.drivers.length != 1;
@@ -318,6 +320,7 @@ class App extends React.Component {
               noResultsMessage="Отсутствуют элементы" 
               options={routeOptions} 
               value={this.state.routes}
+              renderLabel={label => ({ color: label.label.color, content: `${label.text}` })}
               onChange={(e, data) => this.handleRoutesChange(data.value)} />
 
             <Header size="small">Выбор периода</Header>
@@ -345,7 +348,7 @@ class App extends React.Component {
                 checked={this.state.showRealTime}
                 onChange={this.handleCheckBoxRealTimeChange} />
             </div>
-            <div>
+            <div className="real-route">
               <Checkbox 
                 label="Отображать реальный маршрут" 
                 disabled={showCheckbox}

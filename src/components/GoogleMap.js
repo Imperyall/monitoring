@@ -1,5 +1,6 @@
 import React from "react";
 import { getRandomString } from '../utils';
+import InfoWindowExtend from './InfoWindowExtend';
 import { withGoogleMap, GoogleMap, Polyline, Marker, TrafficLayer } from "react-google-maps";
 
 const decodeLevels = encodedLevelsString => {
@@ -22,7 +23,7 @@ const arrowSymbol = {
   rotation: -90,
 };
 
-const renderRoutePolylines = route => route.index ? route.index.map(renderPolyline) : [ renderPolyline(route) ];
+const renderRoutePolylines = route => route.index ? route.index.map(waypoint => renderPolyline(waypoint, route.color)) : [ renderPolyline(route, route.color) ];
 
 const renderCarsReal = props => {
   const { cars, startRefresh, stopRefresh, realTime } = props;
@@ -37,15 +38,14 @@ const renderCarsReal = props => {
         position={{ lat: +car.lat, lng: +car.lng }}
         icon={{
           url: carFile,
-        }}
-      />
+        }} />
     ));
   }
 
   return [];
 };
 
-const renderPolyline = waypoint => (
+const renderPolyline = (waypoint, color) => (
   <Polyline
     key={`p${waypoint.num}${getRandomString()}`}
     options={{
@@ -56,7 +56,7 @@ const renderPolyline = waypoint => (
         repeat: '100px',
         offset: '100%',
       }],
-      strokeColor: waypoint.title ? '#005cad' : '#da1050',
+      strokeColor: waypoint.title ? color : '#da1050', // '#005cad' : '#da1050',
       levels: decodeLevels('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
     }}
     path={
@@ -77,16 +77,7 @@ export default withGoogleMap(props => (
       [ 
         props.showRoutes ? props.routes.reduce((acc, cur) => ([
             ...acc,
-            cur.index.map((waypoint, index) => {
-              const color = '#f00';
-              return (
-                <Marker
-                  key={`m${waypoint.num}`}
-                  position={{ lat: +waypoint.lat, lng: +waypoint.lng }}
-                  icon={`https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=${index + 1}|${color.slice(1)}|000000`}
-                />
-              );
-            }),
+            cur.index.map((waypoint, index) => (<InfoWindowExtend key={`inf${waypoint.num}`} data={waypoint} index={index} />)),
             ...renderRoutePolylines(cur)
           ]), []) : null,
 

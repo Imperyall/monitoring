@@ -11,17 +11,14 @@ body {
   font-smoothing: antialiased;
   font-weight: 400;
 }
-
 #monitoring_container {
   display: flex;
   height: 100vh;
 }
-
 #map_side {
   flex-grow: 0.75;
   flex-basis: 0px;
 }
-
 #divider_side {
   flex: 0 0 auto;
   width: 12px;
@@ -29,11 +26,9 @@ body {
   min-height: 100%;
   cursor: col-resize;
 }
-
 #divider_side:hover {
   background-color: #a9a9a9;
 }
-
 #filter_side {
   flex-grow: 0.25;
   background-color: #fff;
@@ -42,15 +37,12 @@ body {
 #filter_side > div {
   margin: 10px 10px 2px;
 }
-
 div.dropdown {
   font-size: 14px!important;
 }
-
 div.ui.checkbox {
   margin: 0!important;
 }
-
 .checkbox_show_all {
   float: right;
   top: -33px;
@@ -60,6 +52,9 @@ div.ui.checkbox {
 }
 .time-box div {
   float: right;
+}
+.real-route label {
+  color: #da1050!important;
 }
 /*.close-icon {
   position: absolute;

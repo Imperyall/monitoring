@@ -7,7 +7,7 @@ import {
   START_LOADING,
   REFRESH_BOUNDS,
 } from '../constants/actionTypes';
-import { getRandomString } from '../utils';
+import { getRandomString, getRouteColor } from '../utils';
 
 const DEFAULT_STATE = {
   deliveryDeps: [],
@@ -78,7 +78,7 @@ export default function reducer(state = DEFAULT_STATE, action) {
     case GET_ROUTES: {
       return {
         ...state,
-        routes: action.payload.routes,
+        routes: action.payload.routes.map((route, index) => ({ ...route, color: getRouteColor(index) })),
         bounds: action.payload.show && action.payload.show.length
           ? { ...getRouteBounds(action.payload.routes).toJSON(), hash: getRandomString() }
           : null,

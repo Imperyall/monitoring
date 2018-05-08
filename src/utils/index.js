@@ -1,6 +1,9 @@
 import moment from 'moment';
+import colors from '../constants/colors';
 
 export const getRandomString = () => Math.random().toString(36).substring(7);
+
+export const getRouteColor = routeIndex => colors[routeIndex % colors.length];
 
 export const resizeEvent = () => {
   let left = document.getElementById('map_side');
