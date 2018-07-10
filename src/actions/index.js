@@ -3,11 +3,14 @@ import core_url from '../constants/baseUrl';
 import {
   INIT_STATE,
   GET_CARS,
+  GET_CARS_POSITION,
   GET_DRIVERS,
   GET_ROUTES,
   GET_ROUTE_REAL,
   START_LOADING,
   REFRESH_BOUNDS,
+  CHANGE_CENTER,
+  CLEAR_SELECT,
 } from '../constants/actionTypes';
 import { getRandomString } from '../utils';
 
@@ -15,7 +18,7 @@ const logging = (fun, response) => {
   //process.env.NODE_ENV === 'development' && 
   console.log(`[RESPONSE][${fun}]`, response.data && response.data.length ? response.data : 'null');
 
-  if (response.data.code) notify(response.data.code, response.data.text);
+  if (response.data && response.data.hasOwnProperty('code')) notify(response.data.code, response.data.text);
 };
 
 const notify = (type, text) => {
@@ -59,7 +62,7 @@ export const getCars = delivery_dep => dispatch => {
     return dispatch({ type: GET_CARS, payload: []});
   }
 
-  return axios.get(`${core_url}/mon/cars/`, { params: { format: 'json', delivery_dep } })
+  return axios.get(`${core_url}/mon/cars/`, { params: { delivery_dep } })
     .then(res => {
       logging('getCars', res);
 
@@ -69,11 +72,25 @@ export const getCars = delivery_dep => dispatch => {
     }).finally(() => dispatch(startLoading({ end: eventId })));
 };
 
+export const getCarsPosition = car => dispatch => {
+  const eventId = getRandomString();
+  dispatch(startLoading({ add: eventId }));
+
+  return axios.get(`${core_url}/mon/cars/latlng/`, { params: { car } })
+    .then(res => {
+      logging('getCarsPosition', res);
+
+      dispatch({ type: GET_CARS_POSITION, payload: Array.isArray(res.data) ? res.data : [] });
+    }).catch(res => {
+      logging('getCarsPosition error', res);
+    }).finally(() => dispatch(startLoading({ end: eventId })));
+};
+
 export const getDrivers = () => dispatch => {
   const eventId = getRandomString();
   dispatch(startLoading({ add: eventId }));
 
-  return axios.get(`${core_url}/driver/`, { params: { format: 'json' } })
+  return axios.get(`${core_url}/driver/`)
     .then(res => {
       logging('getDrivers', res);
 
@@ -93,7 +110,7 @@ export const getRoutes = ({car, driver, show} = {}) => dispatch => {
     return dispatch({ type: GET_ROUTES, payload: { routes: [] } });
   }
 
-  return axios.get(`${core_url}/mon/routes/`, { params: { format: 'json', car, driver } })
+  return axios.get(`${core_url}/mon/routes/`, { params: { car, driver } })
     .then(res => {
       logging('getRoutes', res);
 
@@ -125,5 +142,7 @@ export const getRouteReal = ({car, driver, date_from, date_to}) => dispatch => {
 
 export const startLoading = action => dispatch => (dispatch({ type: START_LOADING, payload: action }));
 export const refreshBounds = action => dispatch => (dispatch({ type: REFRESH_BOUNDS, payload: action }));
+export const changeCenter = action => dispatch =>  (dispatch({ type: CHANGE_CENTER,  payload: action }));
+export const clearSelect = () => dispatch => (dispatch({ type: CLEAR_SELECT }));
 
 

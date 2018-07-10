@@ -12,8 +12,12 @@ body {
   font-weight: 400;
 }
 #monitoring_container {
-  display: flex;
   height: 100vh;
+}
+#top_side {
+  display: flex;
+  height: 70%;
+  border-bottom: 8px solid #9e9e9e;
 }
 #map_side {
   flex-grow: 0.75;
@@ -33,9 +37,15 @@ body {
   flex-grow: 0.25;
   background-color: #fff;
   flex-basis: 0px;
+  overflow: auto;
 }
-#filter_side > div {
-  margin: 10px 10px 2px;
+#filter_side > form {
+  margin: 10px;
+}
+#bottom_side {
+  padding: 10px;
+  height: 30%;
+  overflow-y: auto;
 }
 div.dropdown {
   font-size: 14px!important;
@@ -43,9 +53,20 @@ div.dropdown {
 div.ui.checkbox {
   margin: 0!important;
 }
-.checkbox_show_all {
+/*.checkbox_show_all {
   float: right;
   top: -33px;
+}*/
+.combo-field {
+  position: relative;
+}
+.combo-field > .dropdown {
+  width: calc(100% - 60px)!important;
+}
+.combo-field > .checkbox {
+  position: absolute;
+  right: 4px;
+  top: 10px;
 }
 .time-box {
   height: 45px;
@@ -55,6 +76,46 @@ div.ui.checkbox {
 }
 .real-route label {
   color: #da1050!important;
+}
+.notify-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+.notify-background {
+  background: #000;
+  opacity: 0.3;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  z-index: 101;
+}
+.notify-box {
+  background: #d82323;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #920e0e;
+  width: 380px;
+  min-height: 280px;
+  z-index: 102;
+  color: #fff;
+  box-shadow: #860303 1px 1px 5px;
+}
+.notify-button-box {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+.notify-button-box button:not(:last-child) {
+  margin-right: 8px;
+}
+.notify-button-box button:last-child {
+  margin-right: 0;
 }
 /*.close-icon {
   position: absolute;

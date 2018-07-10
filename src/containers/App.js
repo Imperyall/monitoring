@@ -3,12 +3,14 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import GoogleMap from '../components/GoogleMap';
 import * as actionsMap from '../actions';
-import { Button, Header, Dropdown, Input, Checkbox } from 'semantic-ui-react';
+import { Button, Dropdown, Input, Checkbox, Form } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 import { resizeEvent } from '../utils';
 import moment from 'moment';
-import {NotificationContainer, NotificationManager} from 'react-notifications';
+import { NotificationContainer, NotificationManager } from 'react-notifications';
 import 'react-notifications/lib/notifications.css';
+import NotifyWindowExtend from '../components/NotifyWindowExtend';
+import TableExtend from '../components/TableExtend';
 
 const { LatLngBounds } = window.google.maps;
 
@@ -34,6 +36,7 @@ class App extends React.Component {
     this.handleMapLoad =                this.handleMapLoad.bind(this);
     this.submit =                       this.submit.bind(this);
     this.handleCheckBoxRealTimeChange = this.handleCheckBoxRealTimeChange.bind(this);
+    this.refreshRoutes =                this.refreshRoutes.bind(this);
 
     this.state = {
       fromDate: moment(new Date()).hour(0).minutes(0).seconds(0).format("YYYY-MM-DDTHH:mm:ss"),
@@ -58,23 +61,22 @@ class App extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if ((prevState.routes !== this.state.routes && this.state.showPlan) || (prevState.showPlan !== this.state.showPlan && this.state.showPlan)) this.props.refreshBounds(this.state.routes);
+    const { bounds } = this.props;
+    const { routes, showPlan, cars, drivers } = this.state;
 
-    if ((prevState.cars !== this.state.cars) || (prevState.drivers !== this.state.drivers)) {
-      if (this.state.cars.length == 0 && this.state.drivers.length == 0) {
+    if ((prevState.routes !== routes && showPlan) || (prevState.showPlan !== showPlan && showPlan)) this.props.refreshBounds(routes);
+
+    if ((prevState.cars !== cars) || (prevState.drivers !== drivers)) {
+      if (cars.length == 0 && drivers.length == 0) {
         this.getRouteReal();
         this.handleRoutesChange();
         this.props.getRoutes();
-      } else if (this.state.cars.length == 1) {
-        this.props.getRoutes({ car: this.state.cars, show: this.state.routes }); 
-        this.state.showReal && this.getRouteReal();
-      } else if (this.state.drivers.length == 1) {
-        this.props.getRoutes({ driver: this.state.drivers, show: this.state.routes }); 
-        this.state.showReal && this.getRouteReal();
+      } else if (cars.length == 1) {
+        this.refreshRoutes({ car: cars, show: routes });
+      } else if (drivers.length == 1) {
+        this.refreshRoutes({ driver: drivers, show: routes });
       }
     }
-
-    const { bounds } = this.props;
 
     if (bounds && bounds !== prevProps.bounds) {
       const { east, north, south, west } = bounds;
@@ -88,21 +90,33 @@ class App extends React.Component {
     window._m = map;
   }
 
+  refreshRoutes(params) {
+    this.props.getRoutes(params); 
+    this.state.showReal && this.getRouteReal();
+  }
+
   startRefreshCars(option) {
-    let func;
+    let func, data, options;
 
     switch (option) {
       case 'drivers':
         func = this.props.getDrivers;
+        options = this.state.deps;
+        data = { driver: this.state.drivers };
         break;
       case 'cars':
-        func = this.props.getCars;
+        func = this.props.getCarsPosition;
+        options = this.state.cars;
+        data = { car: this.state.cars };
         break;
       case 'none':
         return;
     }
 
-    if (!this._refreshCars) this._refreshCars = setInterval(() => func(this.state.deps), 10000);
+    if (!this._refreshCars) this._refreshCars = setInterval(() => {
+      func(options);
+      this.refreshRoutes({ ...data, show: this.state.routes });
+    }, 10000);
   }
 
   stopRefreshCars() {
@@ -133,6 +147,7 @@ class App extends React.Component {
 
   handleCarsChange(value) {
     this.setState({ cars: value });
+    value.length != 0 && this.props.getCarsPosition(value);
 
     // if (value.length == 1) {
     //   this.props.getRoutes({ car: value, show: this.state.routes }); 
@@ -146,6 +161,7 @@ class App extends React.Component {
   }
 
   handleRoutesChange(value = []) {
+    this.props.clearSelect();
     this.setState(prevState => ({ routes: prevState.length !== 0 ? value.filter(item => prevState.routes.indexOf(item) === -1) : value }));
   }
 
@@ -240,145 +256,155 @@ class App extends React.Component {
 
     return (
       <div id="monitoring_container">
-        <div id="map_side">
-          <GoogleMap
-            containerElement={<div style={mapStyle} />}
-            mapElement={<div style={mapStyle} />} 
-            cars={visibleData}
-            realTime={this.state.showRealTime}
-            startRefresh={this.startRefreshCars}
-            stopRefresh={this.stopRefreshCars}
-            onMapLoad={this.handleMapLoad}
-            center={this.props.center}
-            routes={this.props.routes.filter(item => this.state.routes.indexOf(item.id) !== -1)}
-            showRoutes={this.state.showPlan && this.state.routes.length}
-            real={this.props.real}
-            traffic={this.state.showTraffic}
-            showReal={this.state.showReal} />
-        </div>
-        <div id="divider_side" onMouseDown={() => resizeEvent()} />
-        <div id="filter_side">
-          <div>
-
-            <Header size="small">Выбор отделов доставки</Header>
-            <Dropdown 
-              closeOnChange={true} 
-              multiple 
-              search 
-              selection 
-              fluid
-              noResultsMessage="Отсутствуют элементы" 
-              options={deliveryDepsOptions}
-              value={this.state.deps}
-              onChange={(e, data) => this.handleDepsChange(data.value)} />
-
-            <Header size="small">Выбор водителей</Header>
-            <Checkbox 
-              className="checkbox_show_all"
-              label="Выбрать всех" 
-              disabled={showDrivers}
-              checked={this.state.allDrivers}
-              onChange={this.handleCheckBoxDriversChange} />
-            <Dropdown 
-              closeOnChange={true} 
-              multiple 
-              search 
-              selection 
-              fluid
-              noResultsMessage="Отсутствуют элементы" 
-              disabled={showDrivers || this.state.allDrivers}
-              options={driverOptions}
-              value={this.state.drivers}
-              onChange={(e, data) => this.handleDriversChange(data.value)} />
-
-            <Header size="small">Выбор ТС</Header>
-            <Checkbox 
-              className="checkbox_show_all"
-              label="Выбрать всех" 
-              disabled={showCars}
-              checked={this.state.allCars}
-              onChange={this.handleCheckBoxCarsChange} />
-            <Dropdown 
-              closeOnChange={true} 
-              multiple 
-              search 
-              selection 
-              fluid
-              noResultsMessage="Отсутствуют элементы" 
-              disabled={showCars || this.state.allCars}
-              options={carsOptions}
-              value={this.state.cars}
-              onChange={(e, data) => this.handleCarsChange(data.value)} />
-
-            <Header size="small">Выбор маршрутов</Header>
-            <Dropdown 
-              closeOnChange={true} 
-              multiple 
-              search 
-              selection 
-              fluid
-              noResultsMessage="Отсутствуют элементы" 
-              options={routeOptions} 
-              value={this.state.routes}
-              renderLabel={label => ({ color: label.label.color, content: `${label.text}` })}
-              onChange={(e, data) => this.handleRoutesChange(data.value)} />
-
-            <Header size="small">Выбор периода</Header>
-            <div className="time-box">
-              <b>начало</b>
-              <Input 
-                size="mini" 
-                type="datetime-local"
-                value={this.state.fromDate}
-                onChange={this.handleFromDateChange} />
-            </div>
-            <div className="time-box">
-              <b>конец</b>
-              <Input 
-                size="mini" 
-                type="datetime-local"
-                value={this.state.toDate}
-                onChange={this.handleToDateChange} />
-            </div>
-
-            <div>
-              <Checkbox 
-                label="Отображать ТС в реальном времени" 
-                disabled={showCheckbox}
-                checked={this.state.showRealTime}
-                onChange={this.handleCheckBoxRealTimeChange} />
-            </div>
-            <div className="real-route">
-              <Checkbox 
-                label="Отображать реальный маршрут" 
-                disabled={showCheckbox}
-                checked={this.state.showReal}
-                onChange={this.handleCheckBoxRealChange} />
-            </div>
-            <div>
-              <Checkbox 
-                disabled={showCheckbox}
-                checked={this.state.showPlan}
-                onChange={this.handleCheckBoxPlanChange}
-                label="Отображать запланированный маршрут" />
-            </div>
-            <div>
-              <Checkbox 
-                checked={this.state.showTraffic}
-                onChange={this.handleCheckBoxTrafficChange}
-                label="Отображать пробки" />
-            </div>
-
-            <Button 
-              style={{ marginTop: '20px' }} 
-              primary 
-              fluid
-              loading={this.props.loading}
-              disabled={this.props.loading}
-              onClick={() => this.submit()}>Применить</Button>
+        <div id="top_side">
+          <div id="map_side">
+            <GoogleMap
+              containerElement={<div style={mapStyle} />}
+              mapElement={<div style={mapStyle} />} 
+              cars={visibleData}
+              realTime={this.state.showRealTime}
+              startRefresh={this.startRefreshCars}
+              stopRefresh={this.stopRefreshCars}
+              onMapLoad={this.handleMapLoad}
+              center={this.props.center}
+              selectPoint={this.props.selectPoint}
+              changeCenter={this.props.changeCenter}
+              clearSelect={this.props.clearSelect}
+              routes={this.props.routes.filter(item => this.state.routes.indexOf(item.id) !== -1)}
+              showRoutes={this.state.showPlan && this.state.routes.length}
+              real={this.props.real}
+              traffic={this.state.showTraffic}
+              showReal={this.state.showReal} />
           </div>
+          <div id="divider_side" onMouseDown={() => resizeEvent()} />
+          <div id="filter_side">
+            <Form>
+              <Form.Field>
+                <Dropdown 
+                  closeOnChange={true} 
+                  multiple 
+                  search 
+                  selection 
+                  fluid
+                  noResultsMessage="Отсутствуют элементы" 
+                  placeholder="Отделы доставки"
+                  options={deliveryDepsOptions}
+                  value={this.state.deps}
+                  onChange={(e, data) => this.handleDepsChange(data.value)} />
+              </Form.Field>
+              <Form.Field className="combo-field">
+                <Dropdown 
+                  closeOnChange={true} 
+                  multiple 
+                  search 
+                  selection 
+                  fluid
+                  noResultsMessage="Отсутствуют элементы" 
+                  placeholder="Водители"
+                  disabled={showDrivers || this.state.allDrivers}
+                  options={driverOptions}
+                  value={this.state.drivers}
+                  onChange={(e, data) => this.handleDriversChange(data.value)} />
+                <Checkbox 
+                  label="Все" 
+                  disabled={showDrivers}
+                  checked={this.state.allDrivers}
+                  onChange={this.handleCheckBoxDriversChange} />
+              </Form.Field>
+              <Form.Field className="combo-field">
+                <Dropdown 
+                  closeOnChange={true} 
+                  multiple 
+                  search 
+                  selection 
+                  fluid
+                  noResultsMessage="Отсутствуют элементы" 
+                  placeholder="ТС"
+                  disabled={showCars || this.state.allCars}
+                  options={carsOptions}
+                  value={this.state.cars}
+                  onChange={(e, data) => this.handleCarsChange(data.value)} />
+                <Checkbox 
+                  label="Все" 
+                  disabled={showCars}
+                  checked={this.state.allCars}
+                  onChange={this.handleCheckBoxCarsChange} />
+              </Form.Field>
+              <Form.Field>
+                <Dropdown 
+                  closeOnChange={true} 
+                  multiple 
+                  search 
+                  selection 
+                  fluid
+                  noResultsMessage="Отсутствуют элементы" 
+                  placeholder="Маршруты"
+                  options={routeOptions} 
+                  value={this.state.routes}
+                  renderLabel={label => ({ color: label.label.color, content: `${label.text}` })}
+                  onChange={(e, data) => this.handleRoutesChange(data.value)} />
+              </Form.Field>
+              <div className="time-box">
+                <b>начало</b>
+                <Input 
+                  size="mini" 
+                  type="datetime-local"
+                  value={this.state.fromDate}
+                  onChange={this.handleFromDateChange} />
+              </div>
+              <div className="time-box">
+                <b>конец</b>
+                <Input 
+                  size="mini" 
+                  type="datetime-local"
+                  value={this.state.toDate}
+                  onChange={this.handleToDateChange} />
+              </div>
+              <div>
+                <Checkbox 
+                  label="ТС в реальном времени" 
+                  disabled={showCheckbox}
+                  checked={this.state.showRealTime}
+                  onChange={this.handleCheckBoxRealTimeChange} />
+              </div>
+              <div className="real-route">
+                <Checkbox 
+                  label="Реальный маршрут" 
+                  disabled={showCheckbox}
+                  checked={this.state.showReal}
+                  onChange={this.handleCheckBoxRealChange} />
+              </div>
+              <div>
+                <Checkbox 
+                  disabled={showCheckbox}
+                  checked={this.state.showPlan}
+                  onChange={this.handleCheckBoxPlanChange}
+                  label="Запланированный маршрут" />
+              </div>
+              <div>
+                <Checkbox 
+                  checked={this.state.showTraffic}
+                  onChange={this.handleCheckBoxTrafficChange}
+                  label="Пробки" />
+              </div>
+              <Button 
+                style={{ marginTop: '20px' }} 
+                primary 
+                fluid
+                loading={this.props.loading}
+                disabled={this.props.loading}
+                onClick={() => this.submit()}>Применить</Button>
+            </Form>
+          </div>
+          <NotificationContainer/>
+          <NotifyWindowExtend/>
         </div>
-        <NotificationContainer/>
+        <div id="bottom_side">
+          <TableExtend
+            routes={this.props.routes.filter(item => this.state.routes.includes(item.id))}
+            selectRoute={this.props.refreshBounds}
+            selectWaypoint={this.props.changeCenter} />
+        </div>
       </div>
     );
   }
@@ -390,21 +416,25 @@ App.propTypes = {
 //   arr: PropTypes.array,
 //   bool: PropTypes.bool,
 //   num: PropTypes.number,
-  deliveryDeps:   PropTypes.array,
-  cars:           PropTypes.array,
-  drivers:        PropTypes.array,
-  routes:         PropTypes.array,
-  real:           PropTypes.array,
-  loading:        PropTypes.bool,
-  center:         PropTypes.object,
-  bounds:         PropTypes.object,
-  getRouteReal:   PropTypes.func,
-  getCars:        PropTypes.func,
-  getDrivers:     PropTypes.func,
-  getRoutes:      PropTypes.func,
-  init:           PropTypes.func,
-  startLoading:   PropTypes.func,
-  refreshBounds:  PropTypes.func,
+  deliveryDeps:    PropTypes.array,
+  cars:            PropTypes.array,
+  drivers:         PropTypes.array,
+  routes:          PropTypes.array,
+  real:            PropTypes.array,
+  loading:         PropTypes.bool,
+  center:          PropTypes.object,
+  bounds:          PropTypes.object,
+  selectPoint:     PropTypes.string,
+  getRouteReal:    PropTypes.func,
+  getCars:         PropTypes.func,
+  getCarsPosition: PropTypes.func,
+  getDrivers:      PropTypes.func,
+  getRoutes:       PropTypes.func,
+  init:            PropTypes.func,
+  startLoading:    PropTypes.func,
+  refreshBounds:   PropTypes.func,
+  changeCenter:    PropTypes.func,
+  clearSelect:     PropTypes.func,
 };
 
 const mapStateToProps = state => ({
@@ -416,6 +446,7 @@ const mapStateToProps = state => ({
   loading:         state.loading.length !== 0,
   center:          state.center,
   bounds:          state.bounds,
+  selectPoint:     state.selectPoint,
 });
 
 const mapDispatchToProps = actionsMap;

@@ -2,41 +2,39 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Marker, InfoWindow } from "react-google-maps";
 import moment from 'moment';
+import { markerColor } from '../utils';
 
 const dateFormat = time => moment(time).isValid() ? moment(time).format("YYYY-MM-DD HH:mm") : false;
-
-const markerColor = status => {
-  switch (status) {
-    case 'Отгружен': return '#1dd231';
-    case 'Возврат': return '#d81a1a';
-    case 'Отказ': return '#dea610';
-    case 'Акт': return '#109ede';
-    default: return '#ff0';
-  }
-};
 
 class InfoWindowExtend extends React.Component {
   constructor() {
     super();
 
-    this.handleOpen = this.handleOpen.bind(this);
+    this.handleOpen =  this.handleOpen.bind(this);
 
     this.state = { open: false };
   }
 
-  handleOpen() {
-    this.setState(prevState => ({ open: !prevState.open }));
+  componentDidUpdate(prevProps) {
+    const { selectPoint, data } = this.props;
+
+    if (prevProps.selectPoint !== selectPoint) this.handleOpen(selectPoint == data.doc);
+  }
+
+  handleOpen(state) {
+    this.setState({ open: state });
   }
 
   render () {
     const { data, index } = this.props;
+    const color = this.state.open ? 'select' : data.status;
 
     return (
       <Marker
         position={{ lat: +data.lat, lng: +data.lng }}
-        onClick={this.handleOpen}
-        icon={`https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=${index + 1}|${markerColor(data.status).slice(1)}|000000`}>
-        { this.state.open && <InfoWindow>
+        onClick={() => this.props.changeCenter(data)}
+        icon={`https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=${index + 1}|${markerColor(color).slice(1)}|000000`}>
+        { this.state.open && <InfoWindow onCloseClick={() => this.props.changeCenter(data)}>
           <div style={{ lineHeight: '20px' }}>
             <h4>{data.title}</h4>
             <div>
@@ -55,8 +53,10 @@ class InfoWindowExtend extends React.Component {
 }
 
 InfoWindowExtend.propTypes = {
-  data:   PropTypes.object,
-  index:  PropTypes.number,
+  selectPoint:  PropTypes.string,
+  data:         PropTypes.object,
+  index:        PropTypes.number,
+  changeCenter: PropTypes.func,
 };
 
 export default InfoWindowExtend;

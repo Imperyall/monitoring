@@ -14,9 +14,7 @@ const decodeLevels = encodedLevelsString => {
 
 const carFile = require('../resources/car.png'); //https://thenounproject.com/search/?q=car
 
-// const isActiveWaypoint = (w, i) => {
-//   return Array.isArray(w) && w.indexOf(i) !== -1;
-// };
+// const isActiveWaypoint = (w, i) => Array.isArray(w) && w.indexOf(i) !== -1;
 
 const arrowSymbol = {
   path: 'M0,-1 L0,1 L3,0 z',
@@ -72,12 +70,21 @@ export default withGoogleMap(props => (
   <GoogleMap
     ref={props.onMapLoad}
     defaultZoom={11}
-    defaultCenter={props.center} >
+    center={props.center} >
     {
       [ 
         props.showRoutes ? props.routes.reduce((acc, cur) => ([
             ...acc,
-            cur.index.map((waypoint, index) => (<InfoWindowExtend key={`inf${waypoint.num}`} data={waypoint} index={index} />)),
+            cur.index.map((waypoint, index) => (
+              <InfoWindowExtend 
+                key={`inf${waypoint.num}`} 
+                clearSelect={props.clearSelect} 
+                selectPoint={props.selectPoint} 
+                changeCenter={props.changeCenter} 
+                data={waypoint} 
+                index={index} />
+              )
+            ),
             ...renderRoutePolylines(cur)
           ]), []) : null,
 

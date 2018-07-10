@@ -15,9 +15,15 @@ const bundler = webpack(config);
 
 // Run Browsersync and use middleware for Hot Module Replacement
 browserSync({
-  port: 3000,
+  host: 'it001.kopt.org',
+  open: "external",
+  port: 3003,
+  https: {
+    'cert': '../certs/it001.kopt.org.crt',
+    'key': '../certs/it001.kopt.org.key',
+  },
   ui: {
-    port: 3001
+    port: 3004
   },
   server: {
     baseDir: 'src',

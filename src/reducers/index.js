@@ -1,11 +1,14 @@
 import {
   INIT_STATE,
   GET_CARS,
+  GET_CARS_POSITION,
   GET_DRIVERS,
   GET_ROUTES,
   GET_ROUTE_REAL,
   START_LOADING,
   REFRESH_BOUNDS,
+  CHANGE_CENTER,
+  CLEAR_SELECT,
 } from '../constants/actionTypes';
 import { getRandomString, getRouteColor } from '../utils';
 
@@ -17,6 +20,7 @@ const DEFAULT_STATE = {
   real: [],
   bounds: null,
   loading: [],
+  selectPoint: null,
   center: { lat: 45.0444582, lng: 39.0145869 },
 };
 
@@ -68,10 +72,36 @@ export default function reducer(state = DEFAULT_STATE, action) {
       };
     }
 
+    case GET_CARS_POSITION: {
+      if (action.payload.length == 0 ) return state;
+
+      return {
+        ...state,
+        cars: state.cars.map(car => ({ ...car, ...action.payload.find(item => item.id == car.id) }))
+      };
+    }
+
     case GET_DRIVERS: {
       return {
         ...state,
         drivers: action.payload,
+      };
+    }
+
+    case CHANGE_CENTER: {
+      const { doc, lat, lng } = action.payload;
+
+      return {
+        ...state,
+        selectPoint: state.selectPoint == doc ? null : doc,
+        center: { lat: +lat, lng: +lng },
+      };
+    }
+
+    case CLEAR_SELECT: {
+      return {
+        ...state,
+        selectPoint: null,
       };
     }
 
