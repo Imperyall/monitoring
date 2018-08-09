@@ -53,6 +53,7 @@ const renderPolyline = (waypoint, color) => (
         icon: arrowSymbol,
         repeat: '100px',
         offset: '100%',
+        zIndex: waypoint.title ? 101 : 100,
       }],
       strokeColor: waypoint.title ? color : '#da1050', // '#005cad' : '#da1050',
       levels: decodeLevels('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')

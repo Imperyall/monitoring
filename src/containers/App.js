@@ -35,7 +35,6 @@ class App extends React.Component {
     this.stopRefreshCars =              this.stopRefreshCars.bind(this);
     this.handleMapLoad =                this.handleMapLoad.bind(this);
     this.submit =                       this.submit.bind(this);
-    this.handleCheckBoxRealTimeChange = this.handleCheckBoxRealTimeChange.bind(this);
     this.refreshRoutes =                this.refreshRoutes.bind(this);
 
     this.state = {
@@ -50,7 +49,6 @@ class App extends React.Component {
       showReal: false,
       showPlan: true,
       showTraffic: false,
-      showRealTime: false,
       carsReal: []
     };
   }
@@ -114,8 +112,10 @@ class App extends React.Component {
     }
 
     if (!this._refreshCars) this._refreshCars = setInterval(() => {
-      func(options);
-      this.refreshRoutes({ ...data, show: this.state.routes });
+      if (!this.props.loading) {
+        func(options);
+        this.refreshRoutes({ ...data, show: this.state.routes });
+      }
     }, 10000);
   }
 
@@ -191,10 +191,6 @@ class App extends React.Component {
     this.setState({ showTraffic: data.checked });
   }
 
-  handleCheckBoxRealTimeChange(e, data) {
-    this.setState({ showRealTime: data.checked });
-  }
-
   handleFromDateChange(event) {
     this.setState({ fromDate: event.target.value });
     // const val = event.target.value;
@@ -238,8 +234,8 @@ class App extends React.Component {
     }));
 
     const routeOptions = this.props.routes.map(option => ({
-      text: `${option.id1} - ${option.delivery_date}`, 
-      value: option.id, 
+      text: `${option.id1} - ${option.delivery_date}`,
+      value: option.id,
       label: { color: option.color, empty: true, circular: true }
     }));
 
@@ -262,7 +258,7 @@ class App extends React.Component {
               containerElement={<div style={mapStyle} />}
               mapElement={<div style={mapStyle} />} 
               cars={visibleData}
-              realTime={this.state.showRealTime}
+              realTime={this.props.showRealTime}
               startRefresh={this.startRefreshCars}
               stopRefresh={this.stopRefreshCars}
               onMapLoad={this.handleMapLoad}
@@ -364,14 +360,14 @@ class App extends React.Component {
                 <Checkbox 
                   label="ТС в реальном времени" 
                   disabled={showCheckbox}
-                  checked={this.state.showRealTime}
-                  onChange={this.handleCheckBoxRealTimeChange} />
+                  checked={this.props.showRealTime}
+                  onChange={this.props.toggleRealTime} />
               </div>
               <div className="real-route">
                 <Checkbox 
                   label="Реальный маршрут" 
                   disabled={showCheckbox}
-                  checked={this.state.showReal}
+                  checked={this.props.showReal}
                   onChange={this.handleCheckBoxRealChange} />
               </div>
               <div>
@@ -422,6 +418,8 @@ App.propTypes = {
   routes:          PropTypes.array,
   real:            PropTypes.array,
   loading:         PropTypes.bool,
+  showReal:        PropTypes.bool,
+  showRealTime:    PropTypes.bool,
   center:          PropTypes.object,
   bounds:          PropTypes.object,
   selectPoint:     PropTypes.string,
@@ -435,6 +433,7 @@ App.propTypes = {
   refreshBounds:   PropTypes.func,
   changeCenter:    PropTypes.func,
   clearSelect:     PropTypes.func,
+  toggleRealTime:  PropTypes.func,
 };
 
 const mapStateToProps = state => ({
@@ -447,6 +446,7 @@ const mapStateToProps = state => ({
   center:          state.center,
   bounds:          state.bounds,
   selectPoint:     state.selectPoint,
+  showRealTime:    state.showRealTime,
 });
 
 const mapDispatchToProps = actionsMap;

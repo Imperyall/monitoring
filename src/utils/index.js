@@ -9,6 +9,7 @@ export const markerColor = status => {
   switch (status) {
     case 'select': return '#ec048e';
     case 'Отгружен': return '#1dd231';
+    case 'Посещена': return '#1dd231';
     case 'Возврат': return '#ef0505';
     case 'Отказ': return '#dea610';
     case 'Акт': return '#109ede';
@@ -16,28 +17,28 @@ export const markerColor = status => {
   }
 };
 
-const icon = require('../resources/favicon.ico');
+// const icon = require('../resources/favicon.ico');
 
-export const HTMLNotification = text => {
-  const option = { body: 'nav.kopt.org', icon: icon };
+// export const HTMLNotification = text => {
+//   const option = { body: 'nav.kopt.org', icon: icon };
 
-  if (!("Notification" in window)) {
-    alert("This browser does not support desktop notification");
-  }
+//   if (!("Notification" in window)) {
+//     alert("This browser does not support desktop notification");
+//   }
 
-  else if (Notification.permission === "granted") {
-    new Notification(text, option);
-  }
+//   else if (Notification.permission === "granted") {
+//     new Notification(text, option);
+//   }
 
-  else if (Notification.permission !== 'denied') {
-    Notification.requestPermission(permission => {
-      // Если пользователь разрешил, то создаем уведомление 
-      if (permission === "granted") {
-        new Notification(text, option);
-      }
-    });
-  }
-};
+//   else if (Notification.permission !== 'denied') {
+//     Notification.requestPermission(permission => {
+//       // Если пользователь разрешил, то создаем уведомление 
+//       if (permission === "granted") {
+//         new Notification(text, option);
+//       }
+//     });
+//   }
+// };
 
 export const resizeEvent = () => {
   let left = document.getElementById('map_side');

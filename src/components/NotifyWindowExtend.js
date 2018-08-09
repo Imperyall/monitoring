@@ -2,7 +2,6 @@ import React from 'react';
 // import PropTypes from 'prop-types';
 // import moment from 'moment';
 import { Button } from 'semantic-ui-react';
-import { HTMLNotification } from '../utils';
 
 class NotifyWindowExtend extends React.Component {
   constructor() {
@@ -35,7 +34,7 @@ class NotifyWindowExtend extends React.Component {
             <div className="notify-button-box">
               <Button
                 positive
-                onClick={() => HTMLNotification('тест')}
+                onClick={() => window.message('тест')}
                  >Показать на карте</Button>
               <Button
                 onClick={() => this.handleOpen(true)}

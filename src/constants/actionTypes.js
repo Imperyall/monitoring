@@ -8,3 +8,4 @@ export const GET_DRIVERS = 'GET_DRIVERS';
 export const REFRESH_BOUNDS = 'REFRESH_BOUNDS';
 export const CHANGE_CENTER = 'CHANGE_CENTER';
 export const CLEAR_SELECT = 'CLEAR_SELECT';
+export const SHOW_REAL_TIME = 'SHOW_REAL_TIME';

@@ -9,6 +9,7 @@ import {
   REFRESH_BOUNDS,
   CHANGE_CENTER,
   CLEAR_SELECT,
+  SHOW_REAL_TIME,
 } from '../constants/actionTypes';
 import { getRandomString, getRouteColor } from '../utils';
 
@@ -22,6 +23,7 @@ const DEFAULT_STATE = {
   loading: [],
   selectPoint: null,
   center: { lat: 45.0444582, lng: 39.0145869 },
+  showRealTime: false,
 };
 
 const getRouteBounds = route => {
@@ -109,7 +111,7 @@ export default function reducer(state = DEFAULT_STATE, action) {
       return {
         ...state,
         routes: action.payload.routes.map((route, index) => ({ ...route, color: getRouteColor(index) })),
-        bounds: action.payload.show && action.payload.show.length
+        bounds: !state.showRealTime && action.payload.show && action.payload.show.length
           ? { ...getRouteBounds(action.payload.routes).toJSON(), hash: getRandomString() }
           : null,
       };
@@ -136,11 +138,15 @@ export default function reducer(state = DEFAULT_STATE, action) {
 
       return {
         ...newState,
-        bounds: data.length 
+        bounds: !state.showRealTime && data.length 
           ? { ...getRouteBounds(data).toJSON(), hash: getRandomString() }
           : null,
         real: data
       };
+    }
+
+    case SHOW_REAL_TIME: {
+      return { ...state, showRealTime: !state.showRealTime };
     }
 
     default: {

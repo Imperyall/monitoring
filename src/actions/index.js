@@ -11,6 +11,7 @@ import {
   REFRESH_BOUNDS,
   CHANGE_CENTER,
   CLEAR_SELECT,
+  SHOW_REAL_TIME,
 } from '../constants/actionTypes';
 import { getRandomString } from '../utils';
 
@@ -134,7 +135,7 @@ export const getRouteReal = ({car, driver, date_from, date_to}) => dispatch => {
     .then(res => {
       logging('getRouteReal', res);
 
-      dispatch({ type: GET_ROUTE_REAL, payload: { car, driver, data: res.data.hasOwnProperty('geometry') ? res.data.geometry : [] }});
+      dispatch({ type: GET_ROUTE_REAL, payload: { car, driver, data: res.data.hasOwnProperty('geometry') ? res.data.geometry : [] } });
     }).catch(res => {
       logging('getRouteReal error', res);
     }).finally(() => dispatch(startLoading({ end: eventId })));
@@ -143,6 +144,7 @@ export const getRouteReal = ({car, driver, date_from, date_to}) => dispatch => {
 export const startLoading = action => dispatch => (dispatch({ type: START_LOADING, payload: action }));
 export const refreshBounds = action => dispatch => (dispatch({ type: REFRESH_BOUNDS, payload: action }));
 export const changeCenter = action => dispatch =>  (dispatch({ type: CHANGE_CENTER,  payload: action }));
+export const toggleRealTime = () => dispatch => (dispatch({ type: SHOW_REAL_TIME }));
 export const clearSelect = () => dispatch => (dispatch({ type: CLEAR_SELECT }));
 
 
