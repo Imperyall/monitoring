@@ -34,9 +34,7 @@ const renderCarsReal = props => {
       <Marker
         key={`car${car.id}`}
         position={{ lat: +car.lat, lng: +car.lng }}
-        icon={{
-          url: carFile,
-        }} />
+        icon={{ url: carFile }} />
     ));
   }
 
@@ -53,8 +51,8 @@ const renderPolyline = (waypoint, color) => (
         icon: arrowSymbol,
         repeat: '100px',
         offset: '100%',
-        zIndex: waypoint.title ? 101 : 100,
       }],
+      zIndex: waypoint.title ? 200 : 300,
       strokeColor: waypoint.title ? color : '#da1050', // '#005cad' : '#da1050',
       levels: decodeLevels('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
     }}
@@ -74,7 +72,8 @@ export default withGoogleMap(props => (
     center={props.center} >
     {
       [ 
-        props.showRoutes ? props.routes.reduce((acc, cur) => ([
+        props.showRoutes 
+        ? props.routes.reduce((acc, cur) => ([
             ...acc,
             cur.index.map((waypoint, index) => (
               <InfoWindowExtend 
@@ -84,12 +83,15 @@ export default withGoogleMap(props => (
                 changeCenter={props.changeCenter} 
                 data={waypoint} 
                 index={index} />
-              )
-            ),
+              )),
             ...renderRoutePolylines(cur)
-          ]), []) : null,
+          ]), []) 
+        : null,
 
-        props.showReal ? props.real.reduce((acc, cur) => ([ ...acc, ...renderRoutePolylines(cur) ]), []) : null,
+        props.showReal 
+        ? props.real.reduce((acc, cur) => ([ ...acc, ...renderRoutePolylines(cur) ]), []) 
+        : null,
+
         ...renderCarsReal(props)
       ]
     }

@@ -5,10 +5,12 @@ import moment from 'moment';
 import { markerColor } from '../utils';
 
 const dateFormat = 'DD.MM.YYYY HH:mm';
+const shortTime = 'HH:mm';
 const MAX_DIFF = 10; //в минутах
 
-const ifMaxDiff = (start, end) => Math.abs(moment(start).diff(moment(end), 'minutes')) > MAX_DIFF ? '#ffc5c5' : 'white';
-const showDate = time => moment(time).isValid() ? moment(time).format(dateFormat) : '--//--';
+const ifMaxDiff = (start, end) => Math.abs(moment(new Date(start)).diff(moment(new Date(end)), 'minutes')) > MAX_DIFF ? '#ffc5c5' : 'white';
+const showDate = time => moment(new Date(time)).isValid() ? moment(new Date(time)).format(dateFormat) : '--//--';
+const showShortTime = time => moment(new Date(time)).isValid() ? moment().seconds(time).format(shortTime) : '--//--';
 
 const TableExtend = props => {
   if (props.routes.length == 0) return null;
@@ -26,6 +28,10 @@ const TableExtend = props => {
                 <Table.HeaderCell>Дата выезда</Table.HeaderCell>
                 <Table.HeaderCell>Начало маршрута</Table.HeaderCell>
                 <Table.HeaderCell>Окончание маршрута</Table.HeaderCell>
+                <Table.HeaderCell>Плановый пробег</Table.HeaderCell>
+                <Table.HeaderCell>Фактический пробег</Table.HeaderCell>
+                <Table.HeaderCell>Плановое время</Table.HeaderCell>
+                <Table.HeaderCell>Фактическое время</Table.HeaderCell>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -35,6 +41,10 @@ const TableExtend = props => {
                 <Table.Cell>{item.delivery_date}</Table.Cell>
                 <Table.Cell>{showDate(item.delivered_time_s)}</Table.Cell>
                 <Table.Cell>{showDate(item.delivered_time_e)}</Table.Cell>
+                <Table.Cell>{!Number.isNaN(Number.parseFloat(item.distance)) ? (Number.parseFloat(item.distance) / 1000).toFixed(1) : '-'}</Table.Cell>
+                <Table.Cell>{!Number.isNaN(Number.parseFloat(props.real.distance)) ? (Number.parseFloat(props.real.distance) / 1000).toFixed(1) : '-'}</Table.Cell>
+                <Table.Cell>{!Number.isNaN(Number.parseFloat(item.duration)) ? (showShortTime(item.duration)) : '-'}</Table.Cell>
+                <Table.Cell>{!Number.isNaN(Number.parseFloat(props.real.duration)) ? (showShortTime(props.real.duration)) : '-'}</Table.Cell>
               </Table.Row>
             </Table.Body>
           </Table>
@@ -50,7 +60,6 @@ const TableExtend = props => {
                 <Table.HeaderCell>Запланированное время конец</Table.HeaderCell>
                 <Table.HeaderCell>Фактическое время начало</Table.HeaderCell>
                 <Table.HeaderCell>Фактическое время конец</Table.HeaderCell>
-                <Table.HeaderCell>Дистанция</Table.HeaderCell>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -64,7 +73,6 @@ const TableExtend = props => {
                   <Table.Cell>{showDate(waypoint.planned_time_e)}</Table.Cell>
                   <Table.Cell bgcolor={ifMaxDiff(waypoint.delivered_time_s, waypoint.planned_time_s)}>{showDate(waypoint.delivered_time_s)}</Table.Cell>
                   <Table.Cell bgcolor={ifMaxDiff(waypoint.delivered_time_e, waypoint.planned_time_e)}>{showDate(waypoint.delivered_time_e)}</Table.Cell>
-                  <Table.Cell style={{ textAlign: 'right' }}>{Number.isInteger(waypoint.distance) ? (waypoint.distance / 1000).toFixed(1) : '-'}</Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>
@@ -77,6 +85,7 @@ const TableExtend = props => {
 
 TableExtend.propTypes = {
   routes:   PropTypes.array,
+  real:     PropTypes.object,
 };
 
 export default TableExtend;

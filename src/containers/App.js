@@ -11,6 +11,7 @@ import { NotificationContainer, NotificationManager } from 'react-notifications'
 import 'react-notifications/lib/notifications.css';
 import NotifyWindowExtend from '../components/NotifyWindowExtend';
 import TableExtend from '../components/TableExtend';
+import { FULLDATETIME } from '../constants/actionTypes';
 
 const { LatLngBounds } = window.google.maps;
 
@@ -38,8 +39,6 @@ class App extends React.Component {
     this.refreshRoutes =                this.refreshRoutes.bind(this);
 
     this.state = {
-      fromDate: moment(new Date()).hour(0).minutes(0).seconds(0).format("YYYY-MM-DDTHH:mm:ss"),
-      toDate: moment(new Date()).hour(23).minutes(0).seconds(0).format("YYYY-MM-DDTHH:mm:ss"),
       deps: [],
       cars: [],
       allCars: false,
@@ -162,18 +161,33 @@ class App extends React.Component {
 
   handleRoutesChange(value = []) {
     this.props.clearSelect();
-    this.setState(prevState => ({ routes: prevState.length !== 0 ? value.filter(item => prevState.routes.indexOf(item) === -1) : value }));
+    this.setState(prevState => {
+      const routes = prevState.length !== 0 
+        ? value.filter(item => prevState.routes.indexOf(item) === -1) 
+        : value;
+
+      const route = this.props.routes.find(item => item.id === routes[0]);
+      const date = {
+        toDate: route && route.delivered_time_e 
+          ? moment(new Date(route.delivered_time_e)).seconds(0).format(FULLDATETIME) 
+          : moment(new Date()).hour(0).minutes(0).seconds(0).format(FULLDATETIME),
+        fromDate: route && route.delivered_time_s 
+          ? moment(new Date(route.delivered_time_s)).seconds(0).format(FULLDATETIME) 
+          : moment(new Date()).hour(23).minutes(0).seconds(0).format(FULLDATETIME),
+      };
+
+      this.props.setDate(date);
+      return { routes };
+    });
   }
 
   handleCheckBoxRealChange(e, data) {
     data.checked && this.getRouteReal();
-
     this.setState({ showReal: data.checked });
   }
 
   handleCheckBoxPlanChange(e, data) {
     this.state.showReal && this.getRouteReal();
-
     this.setState({ showPlan: data.checked });
   }
 
@@ -192,25 +206,19 @@ class App extends React.Component {
   }
 
   handleFromDateChange(event) {
-    this.setState({ fromDate: event.target.value });
-    // const val = event.target.value;
-
-    // this.setState(prevState => ({ toDate: maxDay(prevState.toDate, val), fromDate: val }));
+    this.props.setDate({ fromDate: event.target.value });
   }
 
   handleToDateChange(event) {
-    this.setState({ toDate: event.target.value });
-    // const val = event.target.value;
-
-    // this.setState(prevState => ({ fromDate: maxDay(prevState.fromDate, val), toDate: val }));
+    this.props.setDate({ toDate: event.target.value });
   }
 
   getRouteReal() {
     this.props.getRouteReal({
       driver: this.state.drivers[0],
       car: this.state.drivers[0] ? undefined : this.state.cars[0], 
-      date_from: moment(this.state.fromDate).isValid() ? moment(this.state.fromDate).format("YYYY-MM-DDTHH:mm:ss") : null, 
-      date_to: moment(this.state.toDate).isValid() ? moment(this.state.toDate).format("YYYY-MM-DDTHH:mm:ss") : null
+      date_from: moment(this.props.fromDate).isValid() ? moment(this.props.fromDate).format(FULLDATETIME) : null, 
+      date_to: moment(this.props.toDate).isValid() ? moment(this.props.toDate).format(FULLDATETIME) : null
     });
   }
 
@@ -248,7 +256,9 @@ class App extends React.Component {
     const carsPos = this.state.allCars ? this.props.cars : this.props.cars.filter(car => this.state.cars.indexOf(car.id) !== -1);
     const driversPos = this.state.allDrivers ? this.props.drivers : this.props.drivers.filter(driver => this.state.drivers.indexOf(driver.id) !== -1);
 
-    const visibleData = driversPos.length ? { data: driversPos, option: 'drivers' } : ( carsPos.length ? { data: carsPos, option: 'cars' } : { data: driversPos, option: 'none' } );
+    const visibleData = driversPos.length 
+      ? { data: driversPos, option: 'drivers' } 
+      : ( carsPos.length ? { data: carsPos, option: 'cars' } : { data: driversPos, option: 'none' } );
 
     return (
       <div id="monitoring_container">
@@ -345,7 +355,7 @@ class App extends React.Component {
                 <Input 
                   size="mini" 
                   type="datetime-local"
-                  value={this.state.fromDate}
+                  value={this.props.fromDate}
                   onChange={this.handleFromDateChange} />
               </div>
               <div className="time-box">
@@ -353,7 +363,7 @@ class App extends React.Component {
                 <Input 
                   size="mini" 
                   type="datetime-local"
-                  value={this.state.toDate}
+                  value={this.props.toDate}
                   onChange={this.handleToDateChange} />
               </div>
               <div>
@@ -398,6 +408,7 @@ class App extends React.Component {
         <div id="bottom_side">
           <TableExtend
             routes={this.props.routes.filter(item => this.state.routes.includes(item.id))}
+            real={{ distance: this.props.distance, duration: this.props.duration }}
             selectRoute={this.props.refreshBounds}
             selectWaypoint={this.props.changeCenter} />
         </div>
@@ -434,6 +445,11 @@ App.propTypes = {
   changeCenter:    PropTypes.func,
   clearSelect:     PropTypes.func,
   toggleRealTime:  PropTypes.func,
+  setDate:         PropTypes.func,
+  distance:        PropTypes.number,
+  duration:        PropTypes.number,
+  fromDate:        PropTypes.string,
+  toDate:          PropTypes.string,
 };
 
 const mapStateToProps = state => ({
@@ -447,6 +463,10 @@ const mapStateToProps = state => ({
   bounds:          state.bounds,
   selectPoint:     state.selectPoint,
   showRealTime:    state.showRealTime,
+  distance:        state.distance,
+  duration:        state.duration,
+  fromDate:        state.fromDate,
+  toDate:          state.toDate,
 });
 
 const mapDispatchToProps = actionsMap;

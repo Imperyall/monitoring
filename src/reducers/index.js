@@ -10,8 +10,11 @@ import {
   CHANGE_CENTER,
   CLEAR_SELECT,
   SHOW_REAL_TIME,
+  SET_DATE,
+  FULLDATETIME,
 } from '../constants/actionTypes';
 import { getRandomString, getRouteColor } from '../utils';
+import moment from 'moment';
 
 const DEFAULT_STATE = {
   deliveryDeps: [],
@@ -24,6 +27,10 @@ const DEFAULT_STATE = {
   selectPoint: null,
   center: { lat: 45.0444582, lng: 39.0145869 },
   showRealTime: false,
+  distance: 0,
+  duration: 0,
+  fromDate: moment(new Date()).hour(0).minutes(0).seconds(0).format(FULLDATETIME),
+  toDate: moment(new Date()).hour(23).minutes(0).seconds(0).format(FULLDATETIME),
 };
 
 const getRouteBounds = route => {
@@ -129,24 +136,31 @@ export default function reducer(state = DEFAULT_STATE, action) {
     }
 
     case GET_ROUTE_REAL: {
-      if (!action.payload.car && !action.payload.driver) return { ...state, real: [] }; 
+      const { car, driver, data } = action.payload;
+      if (!car && !driver) return { ...state, real: [] }; 
 
-      let newState = state, index = newState.real.findIndex(item => item.geometry == action.payload.data),
-          data = action.payload.data.map((item, index) => ({ num: index, geometry: item }));
+      let newState = state, index = newState.real.findIndex(item => item.geometry == data.geometry),
+          geometry = data.geometry.map((item, index) => ({ num: index, geometry: item }));
 
       if (index !== -1) newState.real.splice(index, 1);
 
       return {
         ...newState,
-        bounds: !state.showRealTime && data.length 
-          ? { ...getRouteBounds(data).toJSON(), hash: getRandomString() }
+        bounds: !state.showRealTime && geometry.length 
+          ? { ...getRouteBounds(geometry).toJSON(), hash: getRandomString() }
           : null,
-        real: data
+        real: geometry,
+        distance: data.distance,
+        duration: data.duration,
       };
     }
 
     case SHOW_REAL_TIME: {
       return { ...state, showRealTime: !state.showRealTime };
+    }
+
+    case SET_DATE: {
+      return { ...state, ...action.payload  };
     }
 
     default: {
