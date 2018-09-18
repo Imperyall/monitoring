@@ -8,9 +8,9 @@ const dateFormat = 'DD.MM.YYYY HH:mm';
 const shortTime = 'HH:mm';
 const MAX_DIFF = 10; //в минутах
 
-const ifMaxDiff = (start, end) => Math.abs(moment(new Date(start)).diff(moment(new Date(end)), 'minutes')) > MAX_DIFF ? '#ffc5c5' : 'white';
-const showDate = time => moment(new Date(time)).isValid() ? moment(new Date(time)).format(dateFormat) : '--//--';
-const showShortTime = time => moment(new Date(time)).isValid() ? moment().seconds(time).format(shortTime) : '--//--';
+const ifMaxDiff = (start, end) => start && end && Math.abs(moment(new Date(start)).diff(moment(new Date(end)), 'minutes')) > MAX_DIFF ? '#ffc5c5' : 'white';
+const showDate = time => time && moment(new Date(time)).isValid() ? moment(new Date(time)).format(dateFormat) : '--//--';
+const showShortTime = time => time && moment(new Date(time)).isValid() ? moment().seconds(time).format(shortTime) : '--//--';
 
 const TableExtend = props => {
   if (props.routes.length == 0) return null;
@@ -66,7 +66,7 @@ const TableExtend = props => {
               {item.index.map(waypoint => (
                 <Table.Row key={`p${waypoint.num}`}>
                   <Table.Cell style={{ cursor: 'pointer' }} onClick={() => props.selectWaypoint(waypoint)}>{waypoint.num}</Table.Cell>
-                  <Table.Cell style={{ cursor: 'pointer' }} onClick={() => props.selectWaypoint(waypoint)}>{waypoint.doc}</Table.Cell>
+                  <Table.Cell style={{ cursor: 'pointer' }} onClick={() => props.selectWaypoint(waypoint)}>{waypoint.doc.map(doc => (<p key={doc}>{doc}</p>))}</Table.Cell>
                   <Table.Cell>{waypoint.title}</Table.Cell>
                   <Table.Cell bgcolor={markerColor(waypoint.status)}>{waypoint.status}</Table.Cell>
                   <Table.Cell>{showDate(waypoint.planned_time_s)}</Table.Cell>

@@ -102,7 +102,7 @@ export default function reducer(state = DEFAULT_STATE, action) {
 
       return {
         ...state,
-        selectPoint: state.selectPoint == doc ? null : doc,
+        selectPoint: state.selectPoint == doc.join() ? null : doc.join(),
         center: { lat: +lat, lng: +lng },
       };
     }

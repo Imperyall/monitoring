@@ -18,7 +18,7 @@ class InfoWindowExtend extends React.Component {
   componentDidUpdate(prevProps) {
     const { selectPoint, data } = this.props;
 
-    if (prevProps.selectPoint !== selectPoint) this.handleOpen(selectPoint == data.doc);
+    if (prevProps.selectPoint !== selectPoint) this.handleOpen(selectPoint == data.doc.join());
   }
 
   handleOpen(state) {
@@ -38,7 +38,7 @@ class InfoWindowExtend extends React.Component {
           <div style={{ lineHeight: '20px' }}>
             <h4>{data.title}</h4>
             <div>
-              <div><span>Документ: <b>{data.doc}</b></span></div>
+              <div><span>Документ: <b>{data.doc.join(', ')}</b></span></div>
               <div><span>Статус: <b>{data.status}</b></span></div>
               <div><span>Запланированное время доставки:</span></div>
               <div><span><b>{dateFormat(data.planned_time_s)}</b> - <b>{dateFormat(data.planned_time_e)}</b></span></div>
