@@ -98,7 +98,7 @@ class App extends React.Component {
     switch (option) {
       case 'drivers':
         func = this.props.getDrivers;
-        options = this.state.deps;
+        options = this.state.drivers;
         data = { driver: this.state.drivers };
         break;
       case 'cars':
@@ -132,6 +132,10 @@ class App extends React.Component {
 
   handleDriversChange(value) {
     this.setState({ drivers: value });
+    if (value.length == 0) {
+      this.props.clearDriver();
+      this.props.showRealTime && this.props.toggleRealTime();
+    }
 
     // if (value.length == 1) {
     //   this.props.getRoutes({ driver: value, show: this.state.routes }); 
@@ -163,18 +167,23 @@ class App extends React.Component {
     this.props.clearSelect();
     this.setState(prevState => {
       const routes = prevState.length !== 0 
-        ? value.filter(item => prevState.routes.indexOf(item) === -1) 
+        ? value.filter(item => !prevState.routes.includes(item)) 
         : value;
 
       const route = this.props.routes.find(item => item.id === routes[0]);
       const date = {
-        toDate: route && route.delivered_time_e 
-          ? moment(new Date(route.delivered_time_e)).seconds(0).format(FULLDATETIME) 
-          : moment(new Date()).hour(0).minutes(0).seconds(0).format(FULLDATETIME),
         fromDate: route && route.delivered_time_s 
           ? moment(new Date(route.delivered_time_s)).seconds(0).format(FULLDATETIME) 
+          : moment(new Date()).hour(0).minutes(0).seconds(0).format(FULLDATETIME),
+        toDate: route && route.delivered_time_e 
+          ? moment(new Date(route.delivered_time_e)).seconds(0).format(FULLDATETIME) 
           : moment(new Date()).hour(23).minutes(0).seconds(0).format(FULLDATETIME),
       };
+
+      if (routes.length == 0) {
+        this.props.clearDriver();
+        this.props.showRealTime && this.props.toggleRealTime();
+      }
 
       this.props.setDate(date);
       return { routes };
@@ -254,7 +263,11 @@ class App extends React.Component {
     const showCars = this.state.drivers.length !== 0 || this.state.allDrivers;
 
     const carsPos = this.state.allCars ? this.props.cars : this.props.cars.filter(car => this.state.cars.indexOf(car.id) !== -1);
-    const driversPos = this.state.allDrivers ? this.props.drivers : this.props.drivers.filter(driver => this.state.drivers.indexOf(driver.id) !== -1);
+    const driversPos = this.state.allDrivers 
+      ? this.props.drivers 
+      : this.props.driver.length == 1 
+        ? this.props.driver
+        : this.props.drivers.filter(driver => this.state.drivers.indexOf(driver.id) !== -1);
 
     const visibleData = driversPos.length 
       ? { data: driversPos, option: 'drivers' } 
@@ -418,14 +431,10 @@ class App extends React.Component {
 }
 
 App.propTypes = {
-//   fun: PropTypes.func,
-//   obj: PropTypes.object,
-//   arr: PropTypes.array,
-//   bool: PropTypes.bool,
-//   num: PropTypes.number,
   deliveryDeps:    PropTypes.array,
   cars:            PropTypes.array,
   drivers:         PropTypes.array,
+  driver:          PropTypes.array,
   routes:          PropTypes.array,
   real:            PropTypes.array,
   loading:         PropTypes.bool,
@@ -444,6 +453,7 @@ App.propTypes = {
   refreshBounds:   PropTypes.func,
   changeCenter:    PropTypes.func,
   clearSelect:     PropTypes.func,
+  clearDriver:     PropTypes.func,
   toggleRealTime:  PropTypes.func,
   setDate:         PropTypes.func,
   distance:        PropTypes.number,
@@ -456,6 +466,7 @@ const mapStateToProps = state => ({
   deliveryDeps:    state.deliveryDeps,
   cars:            state.cars,
   drivers:         state.drivers,
+  driver:          state.driver,
   routes:          state.routes,
   real:            state.real,
   loading:         state.loading.length !== 0,

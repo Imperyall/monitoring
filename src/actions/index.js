@@ -13,6 +13,7 @@ import {
   CLEAR_SELECT,
   SHOW_REAL_TIME,
   SET_DATE,
+  CLEAR_DRIVER,
 } from '../constants/actionTypes';
 import { getRandomString } from '../utils';
 
@@ -88,11 +89,11 @@ export const getCarsPosition = car => dispatch => {
     }).finally(() => dispatch(startLoading({ end: eventId })));
 };
 
-export const getDrivers = () => dispatch => {
+export const getDrivers = pk => dispatch => {
   const eventId = getRandomString();
   dispatch(startLoading({ add: eventId }));
 
-  return axios.get(`${core_url}/driver/`)
+  return axios.get(`${core_url}/driver/`, { params: { pk } })
     .then(res => {
       logging('getDrivers', res);
 
@@ -148,5 +149,6 @@ export const changeCenter = action => dispatch =>  (dispatch({ type: CHANGE_CENT
 export const setDate = action => dispatch =>  (dispatch({ type: SET_DATE,  payload: action }));
 export const toggleRealTime = () => dispatch => (dispatch({ type: SHOW_REAL_TIME }));
 export const clearSelect = () => dispatch => (dispatch({ type: CLEAR_SELECT }));
+export const clearDriver = () => dispatch => (dispatch({ type: CLEAR_DRIVER }));
 
 

@@ -12,6 +12,7 @@ import {
   SHOW_REAL_TIME,
   SET_DATE,
   FULLDATETIME,
+  CLEAR_DRIVER,
 } from '../constants/actionTypes';
 import { getRandomString, getRouteColor } from '../utils';
 import moment from 'moment';
@@ -20,6 +21,7 @@ const DEFAULT_STATE = {
   deliveryDeps: [],
   cars: [],
   drivers: [],
+  driver: [],
   routes: [],
   real: [],
   bounds: null,
@@ -91,10 +93,9 @@ export default function reducer(state = DEFAULT_STATE, action) {
     }
 
     case GET_DRIVERS: {
-      return {
-        ...state,
-        drivers: action.payload,
-      };
+      const param = action.payload.length == 1 ? { driver: action.payload } : { drivers: action.payload };
+
+      return { ...state, ...param };
     }
 
     case CHANGE_CENTER: {
@@ -108,9 +109,13 @@ export default function reducer(state = DEFAULT_STATE, action) {
     }
 
     case CLEAR_SELECT: {
+      return { ...state, selectPoint: null };
+    }
+
+    case CLEAR_DRIVER: {
       return {
         ...state,
-        selectPoint: null,
+        driver: [],
       };
     }
 
@@ -129,9 +134,10 @@ export default function reducer(state = DEFAULT_STATE, action) {
 
       return {
         ...state,
-        bounds: action.payload.length
-          ? { ...getRouteBounds(state.routes.find(item => action.payload.indexOf(item.id) !== -1 ).index).toJSON(), hash: getRandomString() }
-          : null,
+        bounds: { 
+          ...getRouteBounds(state.routes.find(item => action.payload.indexOf(item.id) !== -1 ).index).toJSON(), 
+          hash: getRandomString() 
+        }
       };
     }
 
@@ -156,7 +162,11 @@ export default function reducer(state = DEFAULT_STATE, action) {
     }
 
     case SHOW_REAL_TIME: {
-      return { ...state, showRealTime: !state.showRealTime };
+      return { 
+        ...state, 
+        driver: [],
+        showRealTime: !state.showRealTime,
+      };
     }
 
     case SET_DATE: {
