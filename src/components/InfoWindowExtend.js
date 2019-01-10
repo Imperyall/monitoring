@@ -34,7 +34,7 @@ class InfoWindowExtend extends React.Component {
         position={{ lat: +data.lat, lng: +data.lng }}
         onClick={() => this.props.changeCenter(data)}
         icon={`https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=${index + 1}|${markerColor(color).slice(1)}|000000`}>
-        { this.state.open && <InfoWindow onCloseClick={() => this.props.changeCenter(data)}>
+        {this.state.open && <InfoWindow onCloseClick={() => this.props.changeCenter(data)}>
           <div style={{ lineHeight: '20px' }}>
             <h4>{data.title}</h4>
             <div>
